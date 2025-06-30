@@ -2,9 +2,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
 import axios from "axios";
+import 'dotenv/config';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -12,11 +13,7 @@ app.use(express.static("public"));
 app.use('/static', express.static('node_modules'));
 
 const db = new pg.Client({
-    user: `postgres`,
-    host: `localhost`,
-    database: `books`,
-    password: `PGJdmj159753`,
-    port: 5432
+    connectionString: process.env.DATABASE_URL
 });
 
 const bookAPI = axios.create({
