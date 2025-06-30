@@ -1,0 +1,82 @@
+<%- include("partials/header.ejs") %>
+<div class="container mt-5">
+    <section id="found-books">
+        <% if(locals.booksReturned) {%>
+            <% booksReturned.forEach((bookReturned, index) => { %>
+                <form method="post" action="/new-record"> 
+                    <input type="hidden" name="record" value='<%= JSON.stringify(bookReturned) %>'>
+                    <div id='book-<%= index %>' class="boxes mb-5" style="display: none;">
+
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="container">
+                                    <div>
+                                        <img class="cover-img-style" data-book='<%= index %>' src="https://covers.openlibrary.org/b/olid/<%= bookReturned.cover_edition_key %>.jpg">
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <input class="btn btn-success" type="submit" value="ADD">
+                                    </div>
+                                    
+                                </div>
+                            </div> 
+                            <div class="col d-flex flex-column justify-content-between">
+                                <div class="row" style="height: 100%;">
+                                    <div class="fs-1 fw-bolder text-muted">
+                                        <%= bookReturned.title %>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <img class="author-img-style" data-book='<%= index %>' src="https://covers.openlibrary.org/a/olid/<%= bookReturned.author_key %>-M.jpg">
+                                    </div>
+                                    
+                                    <div class="col align-self-center">
+                                        <div class="fs-5 text-muted"><%= bookReturned.author_name %></div>
+                                        <div class="fs-5 text-muted">Published: <%= bookReturned.first_publish_year %></div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            <% }); %>
+        <% } %>
+    </section>
+</div>
+
+<script>
+    const bookImagesStatus = {};
+
+    const covers = document.querySelectorAll('.cover-img-style');
+    const authors = document.querySelectorAll('.author-img-style');
+
+    covers.forEach(img => {
+        const bookId = img.dataset.book;
+        img.onload = ()=>{
+            bookImagesStatus[bookId] = bookImagesStatus[bookId] || {};
+            bookImagesStatus[bookId].cover = img.naturalWidth > 50;
+            checkAndShow(bookId);
+        }
+    });
+
+    authors.forEach(img => {
+        const bookId = img.dataset.book;
+        img.onload = ()=>{
+            bookImagesStatus[bookId] = bookImagesStatus[bookId] || {};
+            bookImagesStatus[bookId].author = img.naturalWidth > 50;;
+            checkAndShow(bookId);
+        }
+    });
+
+    function checkAndShow(bookId)
+    {
+        const status = bookImagesStatus[bookId];
+
+        if(status && status.cover && status.author)
+        {
+            document.getElementById(`book-${bookId}`).style.display = 'block';
+        }
+    }
+</script>
+<%- include("partials/footer.ejs") %>

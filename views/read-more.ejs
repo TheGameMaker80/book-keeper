@@ -1,0 +1,98 @@
+<%- include("partials/header.ejs") %>
+<div class="container">
+    <% if (locals.book) {%>
+        <div class="row mt-3">
+            <div class="col-auto">
+                <div class="container">
+                    <div>
+                        <img class="cover-img-style" src="https://covers.openlibrary.org/b/olid/<%= book.cover_edition_key %>.jpg">
+                    </div>
+                    <div class="d-grid mt-2">
+                        <button id="update-btn" class='btn btn-primary mt-2' data-book = '<%= book.id %>'>Update</button>
+                        <button id="delete-btn" class='btn btn-danger mt-2' data-book = '<%= book.id %>'>Delete</button>    
+                    </div>
+                </div>
+            </div> 
+            <div class="col d-flex flex-column justify-content-between">
+                <div class="row">
+                    <div class="row">
+                        <div class="fs-1 fw-bolder text-muted">
+                            <%= book.title %>
+                        </div>
+                        <div class="text-muted">
+                            <% if(book.rating) {%>
+                                <h6>Rating: <%= book.rating %>/10</h6>
+                            <% } else {%>
+                                <h6>No rating available</h6>
+                            <% } %>
+                        </div>
+                        <div class="text-muted">
+                            <% if(book.readDate) {%>
+                                <h6>Date added: <%= book.readDate %></h6>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto">
+                        <img class="author-img-style" src="https://covers.openlibrary.org/a/olid/<%= book.author_key %>-M.jpg">
+                    </div>
+                    
+                    <div class="col align-self-center">
+                        <div class="fs-5 text-muted"><%= book.author_name %></div>
+                        <div class="fs-5 text-muted">Published: <%= book.first_publish_year %></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="container mt-3">
+            <div class="boxes text-muted">
+                <p><%- book.description.replace(/\n/g, '<br>') %></p>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const updateBtn = document.getElementById('update-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+
+        if(updateBtn)
+        {
+            updateBtn.addEventListener('click', function (){
+                const entryID = updateBtn.dataset.book;
+                window.location.href = `/update/${entryID}`;
+            });
+        }
+
+        if(deleteBtn)
+        {
+            deleteBtn.addEventListener('click', async function (){
+                const entryID = deleteBtn.dataset.book;
+
+                const response = await fetch(`/delete/${entryID}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if(response.ok)
+                {
+                    if(data.redirect)
+                        window.location.href = data.redirect;
+                }
+                else
+                {
+                    if(data.error)
+                        console.error(data.error);
+                }
+
+                window.location.href = `/`;
+            });
+        }
+        });
+    </script>
+
+<%- include("partials/footer.ejs") %>

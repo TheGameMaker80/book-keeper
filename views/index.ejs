@@ -1,0 +1,164 @@
+<%- include("partials/header.ejs") %>
+    <div class="container-fluid m-0 p-0">
+        <div class="hero-bg text-secondary px-4 py-5 text-center"> 
+            <div class="py-5"> 
+                <h1 class="display-5 fw-bold text-muted">Wellcome to Book Keeper</h1> 
+                <div class="col-lg-6 mx-auto"> 
+                    <p class="fs-5 mb-4">
+                        Search for any book you've read or want to explore using data from <span class="fs-5 fw-bold">OpenLibrary.org.</span> 
+                        Instantly access book details, authors, and covers — all in one place. Users can 
+                        quickly search by title or author, and the site displays results with clear formatting 
+                        and helpful metadata.
+                        <br><br>
+                        You can also save books you've read, add your own short description, personal notes, 
+                        and even give them a private rating, helping you build your own reading history and reflections.
+                    </p> 
+                </div> 
+            </div> 
+        </div>
+    </div>
+    <div class="container">
+        <div class="row my-3 jus">
+            <div class="col fs-2 text-white">
+                My Collection
+            </div>
+            <% if(sortOrder) {%>
+            <div class="col d-flex justify-content-end">
+                <div  style="width: 200px;">
+                    <select id="sortBy" class="form-select" name="sortBy" aria-label="Sort by">
+                    <option value="" disabled>Sort by</option>
+                    <option value="1" <%= sortOrder == 1 ? "selected" : "" %>>Date descending</option>
+                    <option value="2" <%= sortOrder == 2 ? "selected" : "" %>>Date ascending</option>
+                    <option value="3" <%= sortOrder == 3 ? "selected" : "" %>>Rating descending</option>
+                    <option value="4" <%= sortOrder == 4 ? "selected" : "" %>>Rating ascending</option>
+                </select>
+                </div>
+            </div>
+            <% } %>
+        </div>
+
+        <section id="book-collection">
+            <% if (locals.books) { %>
+                <% books.forEach(book => { %>
+                    <div class="container boxes mb-5">
+
+                        <div class="row">
+                            <div class="col-auto">
+                                <div class="container">
+                                    <div>
+                                        <img class="cover-img-style" src="https://covers.openlibrary.org/b/olid/<%= book.cover_edition_key %>.jpg">
+                                    </div>
+                                    <div class="d-grid mt-2">
+                                        <button class='read-more-btn btn btn-secondary mt-2' data-book='<%= book.id %>'>Read more</button>
+                                        <button class='update-btn btn btn-primary mt-2' data-book='<%= book.id %>'>Update</button>
+                                        <button class='delete-btn btn btn-danger mt-2' data-book='<%= book.id %>'>Delete</button>
+                                    </div>
+                                </div>
+                            </div> 
+                            <div class="col d-flex flex-column justify-content-between">
+                                <div class="row">
+                                    <div class="fs-1 fw-bolder text-muted">
+                                        <%= book.title %>
+                                    </div>
+                                    <div class="text-muted">
+                                        <% if(book.rating) {%>
+                                            <h6>Rating: <%= book.rating %>/10</h6>
+                                        <% } else {%>
+                                            <h6>No rating available</h6>
+                                        <% } %>
+                                    </div>
+                                    <div class="text-muted">
+                                        <% if(book.readDate) {%>
+                                            <h6>Date added: <%= book.readDate %></h6>
+                                        <% } %>
+                                    </div>
+                                    <div class="mt-2 mb-3 text-muted">
+                                        <%- book.shortInfo.replace(/\n/g, '<br>') %>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <img class="author-img-style" src="https://covers.openlibrary.org/a/olid/<%= book.author_key %>-M.jpg">
+                                    </div>
+                                    
+                                    <div class="col align-self-center">
+                                        <div class="text-muted fs-5"><%= book.author_name %></div>
+                                        <div class="text-muted fs-5">Published: <%= book.first_publish_year %></div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    
+
+                       
+                    </div>
+                <% }); %>
+            <% } %>
+        </section>
+    </div>
+
+    <script src="/static/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const updateBtns = document.querySelectorAll(".update-btn");
+        const deleteBtns = document.querySelectorAll(".delete-btn");
+        const readMoreBtns = document.querySelectorAll(".read-more-btn");
+        const sortBy = document.getElementById("sortBy");
+
+        if(sortBy)
+        {
+            sortBy.addEventListener("change", async (event)=>{
+                window.location.href = `/?sort=${event.target.value}`;
+            });
+        }
+
+        if(readMoreBtns)
+        {
+            readMoreBtns.forEach((btn) => {
+                btn.addEventListener("click", function () {
+                    const entryID = btn.dataset.book;
+                    window.location.href = `/read-more/${entryID}`;
+                });
+            });
+        }
+
+        if(updateBtns)
+        {
+            updateBtns.forEach((btn) => {
+                btn.addEventListener("click", function () {
+                    const entryID = btn.dataset.book;
+                    window.location.href = `/update/${entryID}`;
+                });
+            });
+        }
+
+        if(deleteBtns)
+        {
+            deleteBtns.forEach((btn) => {
+                btn.addEventListener("click", async function () {
+                    const entryID = btn.dataset.book;
+
+                    const response = await fetch(`/delete/${entryID}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+
+                    if(response.ok)
+                    {
+                        if(data.redirect)
+                        {
+                            window.location.href = data.redirect;
+                        }
+                    }
+                    else
+                    {
+                        if(data.error)
+                            console.error(data.error);
+                    }
+                });
+            });
+        }
+    </script>
+
+<%- include("partials/footer.ejs") %>

@@ -1,0 +1,54 @@
+<%- include("partials/header.ejs") %>
+<div class="container">
+    <% if (locals.book) {%>
+        <div class="row mt-3">
+            <div class="col-auto">
+                <img class="cover-img-style" src="https://covers.openlibrary.org/b/olid/<%= book.cover_edition_key %>.jpg">
+            </div> 
+            <div class="col d-flex flex-column justify-content-between">
+                <div class="row" style="height: 100%;">
+                    <div class="fs-1 fw-bolder text-muted">
+                        <%= book.title %>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto">
+                        <img class="author-img-style" src="https://covers.openlibrary.org/a/olid/<%= book.author_key %>-M.jpg">
+                    </div>
+                    
+                    <div class="col align-self-center">
+                        <div class="fs-5 text-muted"><%= book.author_name %></div>
+                        <div class="fs-5 text-muted">Published: <%= book.first_publish_year %></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="mt-3">
+            <form method="post" action= <%= book.id ? '/update-record' : '/save-record'%>>
+                <% if (book.id) { %>
+                    <input type="hidden" name="bookID" value='<%= book.id %>'>
+                <% } %>
+                <input type="hidden" name="book" value='<%= JSON.stringify(book) %>'>
+                <label for="feedbackTextArea" class="form-label">Feedback</label>
+                <textarea id="feedbackTextArea" class="form-control" rows="8" name="feedback" style="resize:none;"><%= book.description%></textarea>
+                <label for="shortInfoTextArea" class="form-label mt-3">Short Info</label>
+                <textarea id="shortInfoTextArea" class="form-control" rows="5" name="shortInfo"  style="resize:none;"><%= book.shortInfo%></textarea>
+                <label for="rating" class="form-label">Rating:</label>
+                <select id="rating" class="form-select" name="rating" aria-label="Select rating">
+                    <option value="" disabled <%= !book.rating ? "selected" : "" %>>Select rating</option>
+                    <% for(var i=1; i<=10; i++) {%>
+                        <option value='<%= i %>' <%= book.rating == i ? "selected" : "" %>><%= i %></option>
+                    <% } %>
+                </select>
+                <div class="text-md-center d-grid d-md-block">
+                    <input class="col-md-4 col-lg-3 col-xl-2 btn btn-success mt-3 w" type="submit" value="Save">
+                </div>
+
+            </form>
+        </div>
+    <% } else {%>
+        <p>Book not found! Try again!</p>
+    <% } %>
+</div>
+<%- include("partials/footer.ejs") %>
