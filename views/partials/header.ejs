@@ -19,11 +19,15 @@
                 <div class="navbar-nav me-auto mb-2 mb-sm-0">
                     <a class="nav-link active text-light" aria-current="page" href="/">Home</a>
                 </div>
+                
                 <% if(!locals.hideSearch) {%>
                     <form class="d-flex" method="get" action="/search">
                         <input class="form-control me-2" type="search" name="searchTxt" placeholder="Search for book" aria-label="Search">
                         <button class="btn search-btn" type="submit">Search</button>
                     </form>
+                <% } %>
+                <% if(!locals.hideLogout) {%>
+                <a class="ms-2 btn btn-secondary" href="/logout">Log Out</a>
                 <% } %>
             </div>
         </div>
