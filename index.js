@@ -1,4 +1,4 @@
-import express from "express";
+import express, { response } from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
 import axios from "axios";
@@ -7,6 +7,7 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2";
 
 const app = express();
 const port = process.env.PORT;
@@ -15,6 +16,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.use('/static', express.static('node_modules'));
+app.use('/bootstrap', express.static('node_modules/bootstrap/dist'));
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -223,10 +225,56 @@ app.get("/read-more/:id", async (req, res)=>{
   }
 });
 
-app.post("/login", passport.authenticate('local',{
-  successRedirect: "/book-keeper",
-  failureRedirect: "/"
+// app.post("/login", passport.authenticate('local',{
+//   successRedirect: "/book-keeper",
+//   failureRedirect: "/"
+// }));
+
+app.post("/login", (req, res, next)=>{
+  passport.authenticate('local', (err, user, info)=>{
+    if(err) return next(err);
+
+    if(!user)
+    {
+      return res.render("home.ejs", {
+        hideSearch: true,
+        hideLogout: true,
+        errorMessage: info.message
+      });
+    }
+
+    req.login(user, (err)=>{
+      if(err) return next(err);
+
+      return res.redirect("/book-keeper");
+    });
+  })(req, res, next);
+});
+
+app.post("/login/google", passport.authenticate('google',{
+  scope: ["profile", "email"]
 }));
+
+app.get("/auth/google/book-keeper", (req, res, next)=>{
+  passport.authenticate('google',(err, user, info)=>{
+    if(err) return next(err);
+
+    if(!user)
+    {
+      return res.render("home.ejs", {
+        hideSearch: true,
+        hideLogout: true,
+        errorMessage: info.message
+      });
+    }
+
+    req.login(user, (err)=>{
+      if(err) return next(err);
+
+      return res.redirect("/book-keeper");
+    });
+  })(req, res, next);
+});
 
 app.get("/logout", (req, res, next)=>{
   req.logout((err)=>{
@@ -249,7 +297,14 @@ app.post("/signup", async (req, res)=>{
     if(result.rows.length > 0)
     {
       console.log("User already registered.Log in instead!");
-      res.redirect("/");
+      const message = `<h4 class="alert-heading">Sign up failed!</h4>
+                       <p>User already registered.Log in instead!</p>`
+
+      return res.render("home.ejs", {
+        hideSearch: true,
+        hideLogout: true,
+        errorMessage: message
+      });
     }
     else
     {
@@ -360,7 +415,55 @@ app.delete("/delete/:id", async (req, res)=>{
   
 });
 
-passport.use(new Strategy(async function verify(username, password, cb){
+passport.use("google", 
+  new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+  }, 
+  async(accessToken, refreshToken, profile, cb)=>{
+    try
+    {
+      const foundUser = await db.query("SELECT * FROM users WHERE email = $1",
+        [profile.email]
+      );
+
+      if(foundUser.rows.length > 0)
+      {
+        const password = foundUser.rows[0].password;
+
+        if(password === "google")
+        {
+          cb(null, foundUser);
+        }
+        else
+        {
+          cb(null, false, 
+            {
+              message: `<h4 class="alert-heading">Login failed!</h4>
+                        <p>The user (${profile.email}) already registered!</p>`
+            });
+        }
+      }
+      else
+      {
+        const result = await db.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", 
+          [profile.email, "google"]
+        );
+
+        return cb(null, result);
+      }
+    }
+    catch (error)
+    {
+      console.log(err);
+      return cb(null, false);
+    }
+  }
+))
+
+passport.use("local", new Strategy(async function verify(username, password, cb){
   try
   {
     const foundUser = await db.query("SELECT * FROM users WHERE email = $1",
@@ -379,20 +482,23 @@ passport.use(new Strategy(async function verify(username, password, cb){
 
         if(result)
         {
-          console.log("Log in Succeed!");
           return cb(null, foundUser);
         }
         else
         {
-          console.log("Wrong password!");
-          return cb(null, false);
+          return cb(null, false, {
+            message: `<h4 class="alert-heading">Login failed!</h4>
+                      <p>The password added was incorect. Please try again</p>`
+            });
         }
       })
     }
     else
     {
-      console.log("User is not registered.Please sign up!");
-      return cb(null, false);
+      return cb(null, false, {
+            message: `<h4 class="alert-heading">Login failed!</h4>
+                      <p>User is not registered. Please sign up!`
+            });
     }
   }
   catch (error)

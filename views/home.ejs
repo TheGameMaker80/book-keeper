@@ -1,22 +1,33 @@
 <%- include("partials/header.ejs") %>
-<div class="container d-flex justify-content-center align-items-center" style="height: 100%;">
-    <div class="boxes col-10 col-md-8 col-lg-4 p-3 mb-5" >
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label class="form-label" for="email">Email</label>
-                <input id="email" type="email" class="form-control" name="username" placeholder="Email"  autocomplete="on"  required>
-            </div>
-            <div class="form-group mt-3">
-                <label class="form-label" for="password">Password</label>
-                <input id="password" type="password" class="form-control" name="password" placeholder="Password" autocomplete="off" required>
-            </div>
+<div class="container d-flex justify-content-center align-items-center" style="height: 100%; flex-direction: column;">
+        <div class="boxes col-10 col-md-8 col-lg-4 p-3 mb-5" >
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input id="email" type="email" class="form-control" name="username" placeholder="Email"  autocomplete="on"  required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label" for="password">Password</label>
+                    <input id="password" type="password" class="form-control" name="password" placeholder="Password" autocomplete="off" required>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <input class="btn btn-primary" type="submit" value="Login">
+                </div>
+            </form>
+            <form method="POST" action="/login/google">
+                <div class="d-flex justify-content-center mt-3">
+                    <button type="submit" class="login-with-google-btn">Sign in with Google</button>
+                </div>
+            </form>
             <div class="d-flex justify-content-center mt-3">
-                <input class="border btn btn-primary" type="submit" value="Login">
+                <a class="text-dark" href="/register">Sign up</a>
             </div>
-        </form>
-        <div class="d-flex justify-content-center mt-3">
-            <a class="text-dark" href="/register">Sign up</a>
         </div>
-    </div>
+        <% if (locals.errorMessage) {%>
+        <div class="col-10 col-md-8 col-lg-4 alert alert-danger alert-dismissible fade show mb-5" role="alert">
+            <%- errorMessage %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <% } %>
 </div>
 <%- include("partials/footer.ejs") %>
